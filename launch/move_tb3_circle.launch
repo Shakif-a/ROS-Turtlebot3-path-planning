@@ -1,0 +1,4 @@
+<launch>
+        <node pkg="basic_package" type="move_tb3_circle.py" name="mover_node" output="screen">
+        </node>
+</launch>
