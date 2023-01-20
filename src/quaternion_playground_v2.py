@@ -74,30 +74,29 @@ def callback(event):
 
     mean = np.mean(image_errors)
     std_dev = np.std(image_errors)
+    cv = (std_dev / mean) * 100
 
     mean2 = np.mean(object_errors)
     std_dev2 = np.std(object_errors)
+    cv2 = (std_dev2 / mean2) * 100
 
-    print("Mean is {:.2f}".format(mean))
-    print("Std dev is {:.2f} \n".format(std_dev))
+    print("CV1 is {:.2f}".format(cv))
+    print("CV2 is {:.2f} \n".format(cv2))
 
-    print("O Mean is {:.2f}".format(mean2))
-    print("O Std dev is {:.2f}".format(std_dev2))
+    image_errors = []
+    object_errors = []
 
-    rospy.signal_shutdown("Shutting down ......")
 
 rospy.init_node('static_tf')
 t = [FiducialTransform() for i in range(2)]
 #check which is better to use - image or object error or fid area
 image_errors = []
 object_errors = []
-starting_time = rospy.Time.now()
-difference = rospy.Duration(1)
 
 sub_topic_name ="/fiducial_transforms"
 transform_subscriber = rospy.Subscriber(sub_topic_name, FiducialTransformArray, transform_callback)
 
-timer = rospy.Timer(rospy.Duration(10),callback)
+timer = rospy.Timer(rospy.Duration(1),callback)
 
 # rate = rospy.Rate(1)
 # while not rospy.is_shutdown():
