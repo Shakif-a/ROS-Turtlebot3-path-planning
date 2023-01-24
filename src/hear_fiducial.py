@@ -78,9 +78,9 @@ class vel_manipulator:
 		marker_transforms = msg.transforms
 		# dynamic transform broadcaster
 		br = tf2_ros.TransformBroadcaster()
-		tfBuffer = tf2_ros.Buffer()
-		listener = tf2_ros.TransformListener(tfBuffer)
-		fixed_trans = Transform()
+		#tfBuffer = tf2_ros.Buffer()
+		#listener = tf2_ros.TransformListener(tfBuffer)
+		#fixed_trans = Transform()
 		# static transform broadcaster
 		static_br = tf2_ros.StaticTransformBroadcaster()
 		# Get all 4 aruco markers in a list
