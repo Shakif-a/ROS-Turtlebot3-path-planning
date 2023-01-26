@@ -65,7 +65,7 @@ if __name__ == '__main__':
 	move = 0.0
 	counter = 1
 	movement_dev = []
-	broadcaster = tf2_ros.TransformBroadcaster()
+	broadcaster = tf2_ros.StaticTransformBroadcaster()
 	integer = 0
 	r = camera_movement()
 	timer = rospy.Timer(rospy.Duration(1),r.timer_callback)
