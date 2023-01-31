@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import rospy
 import numpy as np
 from scipy import linalg
@@ -6,12 +7,13 @@ import geometry_msgs.msg
 from geometry_msgs.msg import Vector3, Quaternion
 import tf2_ros
 from fiducial_msgs.msg import FiducialTransformArray
+from hear_fiducial import vel_manipulator
 
-def quat_to_rot_matrix(q):
+def quat_to_rot_matrix(quat1):
     # Input must be in the form [w,x,y,z]
-    q = np.array(q, dtype=float)
-    q = q / np.linalg.norm(q)
-    qw, qx, qy, qz = q
+    quat1 = np.array(quat1, dtype=float)
+    quat1 = quat1 / np.linalg.norm(quat1)
+    qw, qx, qy, qz = quat1
     rot_matrix = np.array([
         [1 - 2*qy**2 - 2*qz**2, 2*qx*qy - 2*qz*qw, 2*qx*qz + 2*qy*qw, 0],
         [2*qx*qy + 2*qz*qw, 1 - 2*qx**2 - 2*qz**2, 2*qy*qz - 2*qx*qw, 0],
@@ -63,6 +65,7 @@ def matrix_to_translation_quat(matrix):
         quat[1] = (m02 + m20) / S
         quat[2] = (m12 + m21) / S
         quat[3] = 0.25 * S
+        # outputs in the form [x y z] and [w x y z]
     return translation_vector, quat
 
 def extract_variables(obj):
@@ -99,32 +102,54 @@ def calculations(translation, quaternion):
     mat_fiducial = np.matmul(trans_input_matrix,quat_input_matrix)
     mat_forward = np.matmul(trans_const_matrix, quat_const_matrix)
     mat_inv = linalg.inv(mat_fiducial)
-    # For some reason, forward is applied first then inverse transform
-    mat_final = np.matmul(mat_inv, mat_forward)
+    mat_final = np.matmul(mat_forward, mat_inv)
     return mat_final
-
-
-
-def transform_callback(msg):
-    marker_transforms = msg.transforms
-    br = tf2_ros.TransformBroadcaster()
-    coords = geometry_msgs.msg.TransformStamped()
-    if len(marker_transforms) != 0:
-        vector = marker_transforms[0].transform.translation
-        quat = marker_transforms[0].transform.rotation
-        matrix_transform = calculations(vector,quat)
-        (trans_f_array,quat_f_array) = matrix_to_translation_quat(matrix_transform)
-        trans_f = Vector3(trans_f_array[0], trans_f_array[1], trans_f_array[2])
-        quat_f = Quaternion(quat_f_array[1],quat_f_array[2],quat_f_array[3],quat_f_array[0])
-        tf_broadcaster(br, coords, "map", "camera_link", trans_f, quat_f)
-    else:
-        rospy.logwarn("Nothing detected")
 
     
 if __name__ == '__main__':
-    # initialize node
-    rospy.init_node("play_matrix")
-    # subscribe to fiducial transforms
-    sub_topic_name ="/fiducial_transforms"
-    number_subscriber = rospy.Subscriber(sub_topic_name, FiducialTransformArray, transform_callback)
-    rospy.spin()
+    rospy.init_node('my_static_tf2_broadcaster')
+    broadcaster = tf2_ros.StaticTransformBroadcaster()
+    base_link = geometry_msgs.msg.TransformStamped()
+    
+    quat1 = [0.49, 0.4, 0.31, -0.71]
+    quat = Quaternion(quat1[1],quat1[2],quat1[3],quat1[0])
+
+    tran1 = [1.0, 2.0, 3.0]
+    tran = Vector3(tran1[0],tran1[1],tran1[2])
+
+    r = quat_to_rot_matrix(quat1)
+    d = translation_vector_to_matrix(tran1)
+    new = np.matmul(d,r)
+
+    new = linalg.inv(new)
+
+    (d2,r2) = matrix_to_translation_quat(new)
+    print(r2)
+    print(d2)
+    tf_broadcaster(broadcaster, base_link, "map", "turtle", tran, quat)
+    rospy.sleep(2)
+    r2 = Quaternion(r2[1],r2[2],r2[3],r2[0])
+    d2 = Vector3(d2[0],d2[1],d2[2])
+    tf_broadcaster(broadcaster, base_link, "turtle", "beetle", d2, r2)
+    rospy.sleep(2)
+    constant_quat = Quaternion(0.497,-0.504,0.496,0.503)
+    constant_trans = Vector3(0.51,0.0,0.0)
+
+    cqm = extract_variables(constant_quat)
+    ctm = extract_variables(constant_trans)
+    cqm = quat_to_rot_matrix(cqm)
+    ctm = translation_vector_to_matrix(ctm)
+    new2 = np.matmul(ctm,cqm)
+    (d3,r3) = matrix_to_translation_quat(new2)
+    r3 = Quaternion(r3[1],r3[2],r3[3],r3[0])
+    d3 = Vector3(d3[0],d3[1],d3[2])
+    tf_broadcaster(broadcaster, base_link, "beetle", "honeybee", d3, r3)
+    new3 = np.matmul(new,new2)
+    rospy.sleep(2)
+
+    (d4,r4) = matrix_to_translation_quat(new3)
+    r4 = Quaternion(r4[1],r4[2],r4[3],r4[0])
+    d4 = Vector3(d4[0],d4[1],d4[2])
+    tf_broadcaster(broadcaster, base_link, "turtle", "soup", d4, r4)
+
+    rospy.loginfo("Done")

@@ -67,4 +67,11 @@ if __name__ == '__main__':
     p = quat_to_rot_matrix(quat)
     q = quat_to_rot_matrix(quat2)
     r = np.matmul(p,q)
-    print(r)
+    #print(r)
+
+    k = [[0,-1],[1,0]]
+    j = [[1,1],[0,1]]
+    i = np.matmul(j,k)
+    o = np.linalg.inv(i)
+    print(i)
+    print(o)
