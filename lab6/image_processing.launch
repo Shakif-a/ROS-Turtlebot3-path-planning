@@ -1,0 +1,5 @@
+<!-- launch the move_tb3_circle.py node -->
+<launch>
+	<node pkg="shakifs_package" type="image_processing_node.py" name="image_processing_node" output="screen" />
+
+</launch>
